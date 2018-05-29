@@ -60,7 +60,10 @@ class API
 
     public function getBreweries($zipcode): array
     {
-        return [];
+        return [
+            new Brewery('php[tek]', 'here'),
+            new Brewery('php[world]', 'Washington, DC')
+        ];
     }
 }
 

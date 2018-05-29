@@ -10,6 +10,8 @@
 
 namespace EAMann\Contacts\Lesson;
 
+use function EAMann\Contacts\Util\get_user_by_username;
+
 /**
  * The authentication form will send us the user's input for their authentication
  * credentials. Your task is to validate that the username and password match what's

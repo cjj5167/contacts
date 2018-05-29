@@ -116,7 +116,7 @@ function get_user_by_username(string $username): array
 {
     $handle = new \PDO('sqlite:users.db');
 
-    $statement = $handle->prepare('SELECT * from users_old where username = :username');
+    $statement = $handle->prepare('SELECT * from users where username = :username');
     $statement->execute([':username' => $username]);
 
     $users = $statement->fetchAll();

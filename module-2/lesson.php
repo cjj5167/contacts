@@ -8,6 +8,9 @@
 
 namespace EAMann\Contacts\Lesson;
 
+use EAMann\Contacts\Util\API;
+use EAMann\Contacts\Util\Brewery;
+
 /**
  * Retrieve a list of breweries from our remote API, based on a certain geographic
  * location.
