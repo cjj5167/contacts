@@ -8,6 +8,7 @@
 
 namespace EAMann\Contacts\Lesson;
 
+use function Sodium\crypto_sign_detached;
 use function Sodium\crypto_sign_verify_detached;
 
 /**
@@ -23,8 +24,7 @@ function sign_message(string $filename, string $private_key) : string
     $message = file_get_contents($filename);
     $key = hex2bin($private_key);
 
-    // @TODO Sign the string message
-    $signature = '';
+    $signature = sodium_crypto_sign_detached($message, $key);
 
     file_put_contents("$filename.sig", bin2hex($signature));
 
@@ -45,5 +45,5 @@ function get_signed_message(string $filename, string $public_key) : bool
     $signature = hex2bin(file_get_contents("$filename.sig"));
     $key = hex2bin($public_key);
 
-    // @TODO Use the public key to validate the signature on the message
+    return sodium_crypto_sign_verify_detached($signature, $message, $key);
 }

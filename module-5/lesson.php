@@ -16,20 +16,17 @@ use EAMann\Contacts\Util\Contact;
  */
 function list_contacts(): array
 {
-    // @TODO Pull all contacts out of the database, automatically decrypting email addresses as we go.
-
     $contacts = [];
 
-    $handle = new \SQLite3('contacts.db');
+    $handle = new \PDO('sqlite:contacts.db');
 
-    $results = $handle->query('SELECT * FROM contacts');
-    while ($row = $results->fetchArray()) {
+    $statement = $handle->prepare('SELECT * FROM contacts');
 
+    $statement->execute();
+    while ($row = $statement->fetch()) {
         // This won't decrypt anything ... just pass out the name and email address
         $contacts[] = new Contact($row['name'], $row['email']);
     }
-
-    $handle->close();
 
     return $contacts;
 }
@@ -43,13 +40,15 @@ function list_contacts(): array
  */
 function create_contact(string $name, string $email)
 {
-    // @TODO The email address needs to be encrypted at rest. But we also need to query on this field!
+    $handle = new \PDO('sqlite:contacts.db');
 
-    $handle = new \SQLite3('contacts.db');
+    $statement = $handle->prepare('INSERT INTO contacts (name, email) VALUES (:name, :email)');
 
-    $handle->exec(sprintf("INSERT INTO contacts (name, email) VALUES ('%s', '%s')", $name, $email));
+    $s = $statement->execute([':name' => $name, ':email' => $email]);
 
-    $handle->close();
+    if (!$s) {
+        error_log($statement->errorCode());
+    }
 }
 
 /**
@@ -61,16 +60,14 @@ function create_contact(string $name, string $email)
  */
 function find_contact(string $email) : Contact
 {
-    // @TODO Since emails are encrypted, we need to search instead for the _hash_ of the email to find a contact!
+    $handle = new \PDO('sqlite:contacts.db');
 
-    $handle = new \SQLite3('contacts.db');
+    $statement = $handle->prepare('SELECT * FROM contacts WHERE email = :email LIMIT 1');
+    $statement->execute([':email' => $email]);
 
-    $results = $handle->query(sprintf("SELECT * FROM contacts WHERE email = '%s' LIMIT 1;", $email));
-    $row = $results->fetchArray();
+    $row = $statement->fetch();
 
     $contact = new Contact($row['name'], $row['email']);
-
-    $handle->close();
 
     return $contact;
 }

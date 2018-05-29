@@ -7,6 +7,28 @@ namespace EAMann\Contacts\Lesson;
 
 use EAMann\Contacts\Util\Contact;
 
+require_once '../config.php';
+
+function encrypt(string $message): string
+{
+    $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+    $key = hex2bin(SECRET_KEY);
+    $cipher = sodium_crypto_secretbox($message, $nonce, $key);
+
+    return bin2hex($nonce . $cipher);
+}
+
+function decrypt(string $encrypted): string
+{
+    $key = hex2bin(SECRET_KEY);
+
+    $bits = hex2bin($encrypted);
+    $nonce = substr($bits, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+    $cipher = substr($bits, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+
+    return sodium_crypto_secretbox_open($cipher, $nonce, $key);
+}
+
 /**
  * Pull a list of all contacts from the database, automatically decrypting
  * the email field (and other sensitive fields) as you go.
@@ -15,8 +37,6 @@ use EAMann\Contacts\Util\Contact;
  */
 function list_contacts(): array
 {
-    // @TODO Pull all contacts out of the database, automatically decrypting email addresses as we go.
-
     $contacts = [];
 
     $handle = new \SQLite3('contacts.db');
@@ -25,7 +45,8 @@ function list_contacts(): array
     while ($row = $results->fetchArray()) {
 
         // This won't decrypt anything ... just pass out the name and email address
-        $contacts[] = new Contact($row['name'], $row['email']);
+        $email = decrypt($row['email']);
+        $contacts[] = new Contact($row['name'], $email);
     }
 
     $handle->close();
@@ -42,11 +63,12 @@ function list_contacts(): array
  */
 function create_contact(string $name, string $email)
 {
-    // @TODO The email address needs to be encrypted at rest. But we also need to query on this field!
-
     $handle = new \SQLite3('contacts.db');
 
-    $handle->exec(sprintf("INSERT INTO contacts (name, email) VALUES ('%s', '%s')", $name, $email));
+    $hashedEmail = hash_hmac('sha512', $email, HMAC_KEY);
+    $encryptedEmail = encrypt($email);
+
+    $handle->exec(sprintf("INSERT INTO contacts (name, email, email_hash) VALUES ('%s', '%s', '%s')", $name, $encryptedEmail, $hashedEmail));
 
     $handle->close();
 }
@@ -60,14 +82,21 @@ function create_contact(string $name, string $email)
  */
 function find_contact(string $email) : Contact
 {
-    // @TODO Since emails are encrypted, we need to search instead for the _hash_ of the email to find a contact!
-
     $handle = new \SQLite3('contacts.db');
 
-    $results = $handle->query(sprintf("SELECT * FROM contacts WHERE email = '%s' LIMIT 1;", $email));
+    $emailHash = hash_hmac('sha512', $email, HMAC_KEY);
+
+    $results = $handle->query(sprintf("SELECT * FROM contacts WHERE email_hash = '%s' LIMIT 1;", $emailHash));
     $row = $results->fetchArray();
 
-    $contact = new Contact($row['name'], $row['email']);
+    if (!empty($row)) {
+        $decryptedEmail = decrypt($row['email']);
+
+        $contact = new Contact($row['name'], $decryptedEmail);
+    } else {
+        return new Contact('', '');
+    }
+
 
     $handle->close();
 

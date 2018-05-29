@@ -25,6 +25,10 @@ require_once __DIR__ . '/util.php';
 require_once __DIR__ . '/lesson.php';
 
 ini_set('session.save_path', getcwd());
+ini_set('session.save_handler', 'files');
+$handler = new Lesson\EncryptedSessionHandler();
+session_set_save_handler($handler, true);
+
 session_start();
 
 $container = new Container;

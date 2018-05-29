@@ -28,16 +28,16 @@ use function EAMann\Contacts\Util\get_user_by_username;
  */
 function validate_auth(string $username, string $password)
 {
-    /**
-     * @TODO
-     * Match usernames to passwords to verify authentication data. If we find a match,
-     * this function should return `true`, otherwise `false`.
-     */
+    try {
+        $user = get_user_by_username($username);
 
-    /**
-     * @TODO
-     * The application back-end assumes there's a persistent session set with a key of
-     * 'auth.' Make sure we put _something_ in the session with that key, otherwise users
-     * won't have anything to view once they log in!
-     */
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['auth'] = $username;
+            return true;
+        }
+
+        return false;
+    } catch (\Exception $e) {
+        return false;
+    }
 }

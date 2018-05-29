@@ -11,6 +11,8 @@ namespace EAMann\Contacts\Lesson;
 use EAMann\Contacts\Util\API;
 use EAMann\Contacts\Util\Brewery;
 
+require_once '../config.php';
+
 /**
  * Retrieve a list of breweries from our remote API, based on a certain geographic
  * location.
@@ -21,9 +23,9 @@ use EAMann\Contacts\Util\Brewery;
  */
 function get_breweries(string $zipcode) : array
 {
-    // @TODO Assume our Util::API class is an SDK wrapper than enumerates Breweries. How would you instantiate it?
+    $api = new API(API_KEY_ID, API_SECRET);
 
-    // @TODO Once you have a handle on the SDK, fetch the list of breweries!
+    return $api->getBreweries($zipcode);
 }
 
 /**
@@ -33,7 +35,16 @@ function get_breweries(string $zipcode) : array
  */
 function show_dashboard($zipcode): string
 {
-    // @TODO Use our helper method above to fetch a list of breweries given the ZIP specified in a search
+    $breweries = get_breweries($zipcode);
 
-    // @TODO Iterate through the list of breweries returned and build out an HTML payload to write to the response
+    $list = '<ul>';
+
+    foreach($breweries as $brewery) {
+        /** @var Brewery $brewery */
+        $list .= '<li>' . $brewery->name . ' | ' . $brewery->address . '</li>';
+    }
+
+    $list .= '</ul>';
+
+    return $list;
 }

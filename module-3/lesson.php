@@ -8,6 +8,8 @@
 
 namespace EAMann\Contacts\Lesson;
 
+require_once '../config.php';
+
 /**
  * Automatically encrypt the contents of a secret message sent to the server. Store the output
  * of the encryption in `secret.txt` for later retrieval.
@@ -16,11 +18,11 @@ namespace EAMann\Contacts\Lesson;
  */
 function store_secret_message(string $message)
 {
-    // @TODO Encrypt the secret string using Libsodium. You can either use an asymmetric keypair or a single symmetric key
+    $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+    $key = hex2bin(SECRET_KEY);
+    $cipher = sodium_crypto_secretbox($message, $nonce, $key);
 
-    // @TODO Use the tricks learned in lesson 2 to protect the key(s) you use for encryption!
-
-    file_put_contents('secret.txt', $message);
+    file_put_contents('secret.txt', bin2hex($nonce . $cipher));
 }
 
 /**
@@ -32,7 +34,13 @@ function get_secret_message() : string
 {
     $message = file_get_contents('secret.txt');
 
-    // @TODO Read the contents of `secret.txt` and decrypt them for presentation.
+    $key = hex2bin(SECRET_KEY);
 
-    return $message;
+    $bits = hex2bin($message);
+    $nonce = substr($bits, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+    $cipher = substr($bits, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+
+    $plaintext = sodium_crypto_secretbox_open($cipher, $nonce, $key);
+
+    return $plaintext;
 }
