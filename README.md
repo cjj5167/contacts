@@ -1,6 +1,6 @@
 # Contacts Demo
 
-This is an iterative demo application prepared for php[tek] 2018. It's divided into multiple _modules_, each of which is intended to be a standalone lesson in PHP security.
+This is an iterative demo application prepared for php[world] 2018. It's divided into multiple _modules_, each of which is intended to be a standalone lesson in PHP security.
 
 Each module subdirectory contains:
 
